@@ -32,19 +32,18 @@ exports.handler = async (event) => {
 
     if (data.error) {
       return {
-        statusCode: 400,
-        body: "Error: " + data.error_description,
+        statusCode: 200,
+        headers: { "Content-Type": "text/html" },
+        body: "<!DOCTYPE html><html><body><script>(function(){var m='authorization:github:error:" + data.error + "';if(window.opener){window.opener.postMessage(m,'*');}window.close();})();<\/script></body></html>",
       };
     }
 
     const token = data.access_token;
-    const payload = JSON.stringify({ token: token, provider: "github" });
-    const message = "authorization:github:success:" + payload;
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "text/html" },
-      body: "<!DOCTYPE html><html><body><script>(function(){var m=" + JSON.stringify(message) + ";if(window.opener){window.opener.postMessage(m,'*');}window.close();})();<\/script><p>Authorizing...</p></body></html>",
+      body: "<!DOCTYPE html><html><body><script>(function(){var token='" + token + "';var m='authorization:github:success:{\"token\":\"' + token + '\",\"provider\":\"github\"}';if(window.opener){window.opener.postMessage(m,'*');}window.close();})();<\/script></body></html>",
     };
   } catch (err) {
     return {
