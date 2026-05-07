@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+[[plugins]]
+  package = "@netlify/plugin-netlify-graph"
+
+[dev]
+  publish = "."
