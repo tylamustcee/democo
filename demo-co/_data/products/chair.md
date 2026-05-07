@@ -2,6 +2,6 @@
 name: Chair
 price: 50
 description: You can sit on it
-image: /images/uploads/summerhill-sh-monogram.png
+image: ''
 sku: '1081293712'
 ---
