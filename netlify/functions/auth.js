@@ -9,7 +9,7 @@ exports.handler = async (event) => {
     const params = new URLSearchParams({
       client_id,
       scope: "repo,user",
-      redirect_uri: `${process.env.URL}/api/auth`,
+      redirect_uri: `${process.env.URL}/.netlify/functions/auth`,
     });
     return {
       statusCode: 302,
