@@ -2,8 +2,6 @@ backend:
   name: github
   repo: tylamustcee/democo
   branch: main
-  base_url: https://mustceedemo.netlify.app
-  auth_endpoint: /.netlify/functions/auth
 
 media_folder: "demo-co/images/uploads"
 public_folder: "/images/uploads"
