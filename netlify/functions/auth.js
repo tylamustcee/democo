@@ -1,11 +1,11 @@
+```javascript
 const client_id = process.env.GITHUB_CLIENT_ID;
 const client_secret = process.env.GITHUB_CLIENT_SECRET;
 
 exports.handler = async (event) => {
-  const { code, provider } = event.queryStringParameters || {};
+  const { code } = event.queryStringParameters || {};
 
   if (!code) {
-    // Step 1: Redirect to GitHub OAuth
     const params = new URLSearchParams({
       client_id,
       scope: "repo,user",
@@ -19,7 +19,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Step 2: Exchange code for token
   try {
     const response = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
@@ -40,24 +39,26 @@ exports.handler = async (event) => {
     }
 
     const token = data.access_token;
-    const script = `
-      <script>
-        (function() {
-          function receiveMessage(e) {
-            console.log("receiveMessage %o", e);
-          }
-          window.opener.postMessage(
-            'authorization:github:success:${JSON.stringify({ token, provider: "github" })}',
-            e.origin
-          );
-        })()
-      </script>
-    `;
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "text/html" },
-      body: `<!DOCTYPE html><html><body>${script}</body></html>`,
+      body: `<!DOCTYPE html>
+<html>
+<body>
+<script>
+  (function() {
+    var token = ${JSON.stringify(token)};
+    var message = "authorization:github:success:" + JSON.stringify({token: token, provider: "github"});
+    if (window.opener) {
+      window.opener.postMessage(message, "*");
+    }
+    window.close();
+  })();
+</script>
+<p>Authorizing... you can close this window.</p>
+</body>
+</html>`,
     };
   } catch (err) {
     return {
@@ -66,3 +67,4 @@ exports.handler = async (event) => {
     };
   }
 };
+```
