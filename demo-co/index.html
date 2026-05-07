@@ -822,6 +822,91 @@
     document.getElementById('mobileMenu').classList.remove('open');
     document.body.style.overflow = '';
   }
+
+  // Parse YAML frontmatter from .md files
+  function parseFrontmatter(text) {
+    const match = text.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) return {};
+    const yaml = match[1];
+    const result = {};
+    yaml.split('\n').forEach(line => {
+      const colonIndex = line.indexOf(':');
+      if (colonIndex === -1) return;
+      const key = line.slice(0, colonIndex).trim();
+      let value = line.slice(colonIndex + 1).trim();
+      // Strip quotes
+      if ((value.startsWith("'") && value.endsWith("'")) ||
+          (value.startsWith('"') && value.endsWith('"'))) {
+        value = value.slice(1, -1);
+      }
+      // Convert numbers
+      if (!isNaN(value) && value !== '') value = parseFloat(value);
+      result[key] = value;
+    });
+    return result;
+  }
+
+  async function loadProducts() {
+    const grid = document.getElementById('products-grid');
+
+    try {
+      // Fetch the directory listing from GitHub API
+      const repoPath = 'tylamustcee/democo';
+      const branch = 'main';
+      const folder = 'demo-co/_data/products';
+      const apiUrl = `https://api.github.com/repos/${repoPath}/contents/${folder}?ref=${branch}`;
+
+      const dirRes = await fetch(apiUrl);
+      if (!dirRes.ok) throw new Error('Could not load products');
+      const files = await dirRes.json();
+
+      const mdFiles = files.filter(f => f.name.endsWith('.md'));
+
+      if (mdFiles.length === 0) {
+        grid.innerHTML = '<p style="color:var(--grey)">No products found.</p>';
+        return;
+      }
+
+      const products = await Promise.all(mdFiles.map(async file => {
+        const res = await fetch(file.download_url);
+        const text = await res.text();
+        return { ...parseFrontmatter(text), slug: file.name.replace('.md', '') };
+      }));
+
+      grid.innerHTML = products.map(p => {
+        const image = p.image
+          ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
+          : `<span style="font-size:3rem">&#128167;</span>`;
+
+        return `
+          <div class="product-card">
+            <div class="product-image">${image}</div>
+            <div class="product-info">
+              <div class="product-name">${p.name}</div>
+              <div class="product-desc">${p.description || ''}</div>
+              <div class="product-footer">
+                <div class="product-price">$${Number(p.price).toFixed(2)}</div>
+                <button
+                  class="btn-add snipcart-add-item"
+                  data-item-id="${p.slug}"
+                  data-item-price="${p.price}"
+                  data-item-url="/index.html"
+                  data-item-name="${p.name}"
+                  data-item-description="${p.description || ''}"
+                  ${p.image ? `data-item-image="${p.image}"` : ''}
+                >Add to Cart</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+    } catch (err) {
+      grid.innerHTML = '<p style="color:var(--grey)">Could not load products.</p>';
+      console.error(err);
+    }
+  }
+
+  loadProducts();
 </script>
 
 </body>
